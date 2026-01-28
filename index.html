@@ -71,7 +71,6 @@
 
     <div class="viewer-container" id="viewerContainer">
         <img id="pageImage" src="" alt="News Page" loading="lazy">
-        
     </div>
 
     <div id="editionModal" class="modal">
@@ -79,7 +78,7 @@
             <span class="close-modal" onclick="closeEditionSelector()">&times;</span>
             <h3>Select Edition</h3>
             <select id="dateSelect" onchange="loadSelectedEdition()">
-                </select>
+            </select>
         </div>
     </div>
 
@@ -93,16 +92,17 @@
             <img id="clipperImage" src="" style="width:100%;">
         </div>
         <div class="clipper-footer">
-            
-
-</div>
+            </div>
     </div>
-    <div id="footer-btn" onclick="toggleFooter()">▲</div>
 
     <div id="sliding-footer">
-        <p>Copyright © 2026 B10Vartha</p>
-        <p>All Rights Reserved.</p>
-        <p>Built by saas.ramu</p>
+        <div id="footer-btn" onclick="toggleFooter()">⏏</div>
+
+        <div class="footer-content">
+            <p>Copyright © 2026 B10Vartha.</p>
+            <p>All Rights Reserved.</p>
+            <p>Built by saas.ramu</p>
+        </div>
     </div>
 
     <script src="app.js"></script>

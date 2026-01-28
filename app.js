@@ -20,7 +20,6 @@ let totalPages = 1;
 window.onload = function() {
     setupDateDisplay();
     loadEdition(currentDateStr);
-    setupFooter();
 };
 
 // 1. DATE & DISPLAY LOGIC
@@ -151,34 +150,10 @@ function toggleClipper() {
     }
 }
 
-// 6. FOOTER
-function setupFooter() {
-    // Already handled by toggleFooter
-}
-
-function toggleFooter() {
-    const panel = document.getElementById('footerPanel');
-    const icon = document.getElementById('footerIcon');
-    panel.classList.toggle('show');
-    
-    if(panel.classList.contains('show')) {
-        icon.classList.remove('fa-caret-up');
-        icon.classList.add('fa-caret-down');
-    } else {
-        icon.classList.remove('fa-caret-down');
-        icon.classList.add('fa-caret-up');
-    }
-}
+// 6. FOOTER LOGIC (Final Version)
 function toggleFooter() {
     const footer = document.getElementById("sliding-footer");
-    const btn = document.getElementById("footer-btn");
-    
-    // Check if footer is currently open
-    if (footer.classList.contains("active")) {
-        footer.classList.remove("active"); // Hide it
-        btn.innerHTML = "▲"; // Arrow up
-    } else {
-        footer.classList.add("active"); // Show it
-        btn.innerHTML = "▼"; // Arrow down
-    }
+    // Simply switches the class on/off. 
+    // This allows the CSS to handle the slide animation.
+    footer.classList.toggle("active");
 }
