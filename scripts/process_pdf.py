@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import glob
 import re
+from PIL import Image  # This is the new "Scissors" tool
 
 # CONFIGURATION
 UPLOADS_DIR = "uploads"
@@ -20,20 +21,19 @@ def main():
         print("No PDF found in uploads/ folder.")
         return
 
-    pdf_path = pdfs[0] # Take the first PDF found
+    pdf_path = pdfs[0]
     filename = os.path.basename(pdf_path)
-    date_str = filename.replace(".pdf", "") # Assumes format DD-MM-YYYY.pdf
+    date_str = filename.replace(".pdf", "")
     
     print(f"Processing Edition: {date_str}")
 
     # 2. Create Output Directory
     output_dir = os.path.join(PAPERS_DIR, date_str)
     if os.path.exists(output_dir):
-        shutil.rmtree(output_dir) # Clear if exists (re-upload fix)
+        shutil.rmtree(output_dir)
     os.makedirs(output_dir)
 
-    # 3. Convert PDF to Images (Using pdftoppm)
-    # Output format will be 1.png, 2.png...
+    # 3. Convert PDF to Images
     subprocess.run([
         "pdftoppm", 
         "-png", 
@@ -41,7 +41,7 @@ def main():
         os.path.join(output_dir, "")
     ], check=True)
 
-    # 4. Rename images (pdftoppm outputs -01.png, we want 1.png)
+    # 4. Rename images
     images = sorted(glob.glob(os.path.join(output_dir, "*.png")))
     page_count = len(images)
     
@@ -54,14 +54,14 @@ def main():
     # 5. Update app.js
     update_app_js(date_str, page_count)
 
-    # 6. Update Social Media Preview (The New Feature)
+    # 6. Create Smart Preview (The New Feature)
     first_page_path = os.path.join(output_dir, "1.png")
     if os.path.exists(first_page_path):
-        update_social_preview(date_str, first_page_path)
+        create_smart_preview(date_str, first_page_path)
 
     # 7. Clean up
     os.remove(pdf_path)
-    print("PDF processed, preview updated, and file removed.")
+    print("PDF processed and removed.")
 
 def update_app_js(date_key, pages):
     with open(APP_JS_FILE, "r", encoding="utf-8") as f:
@@ -77,31 +77,33 @@ def update_app_js(date_key, pages):
                 f.write(new_content)
             print(f"Updated app.js with {date_key}")
         else:
-            print(f"Entry for {date_key} already exists in app.js")
-    else:
-        print("ERROR: Marker // ROBOT_ENTRY_POINT not found in app.js")
+            print(f"Entry for {date_key} already exists")
 
-def update_social_preview(date_str, first_page_source):
-    # A. Copy Page 1 to assets/latest-cover.png
+def create_smart_preview(date_str, source_image_path):
     target_cover = os.path.join(ASSETS_DIR, "latest-cover.png")
-    shutil.copy(first_page_source, target_cover)
-    print(f"Updated assets/latest-cover.png with Page 1 of {date_str}")
-
-    # B. Update index.html to force WhatsApp to see the new image
-    # We add ?v=DATE to the URL. This tricks WhatsApp into thinking it's a new file.
     
+    # --- SMART CROP LOGIC START ---
+    # We open Page 1 and cut out the TOP 45% (Logo + Headlines)
+    with Image.open(source_image_path) as img:
+        width, height = img.size
+        # Crop: (Left, Top, Right, Bottom)
+        # We take the full width, but only the top 45% of the height
+        crop_height = int(height * 0.45) 
+        
+        cropped_img = img.crop((0, 0, width, crop_height))
+        cropped_img.save(target_cover)
+        print(f"Created Smart Crop (Top 45%) for WhatsApp preview")
+    # --- SMART CROP LOGIC END ---
+
+    # Update index.html
     with open(INDEX_HTML_FILE, "r", encoding="utf-8") as f:
         html_content = f.read()
 
-    # The new image link with a version tag
     new_image_url = f"{DOMAIN_URL}/assets/latest-cover.png?v={date_str}"
 
-    # Regex to replace the og:image content
-    # Looks for: <meta property="og:image" content="...">
     pattern_og = r'(<meta property="og:image" content=")([^"]+)(")'
     html_content = re.sub(pattern_og, f'\\g<1>{new_image_url}\\g<3>', html_content)
 
-    # Regex to replace the twitter:image content
     pattern_tw = r'(<meta name="twitter:image" content=")([^"]+)(")'
     html_content = re.sub(pattern_tw, f'\\g<1>{new_image_url}\\g<3>', html_content)
 
