@@ -6,11 +6,21 @@ const editions = {
     "28-01-2026": { pages: 5, pdf: "full.pdf" },
     // ROBOT_ENTRY_POINT
     "29-01-2026": { pages: 5 },
-
     "27-01-2026": { pages: 8, pdf: "full.pdf" },
     "26-01-2026": { pages: 6, pdf: "full.pdf" },
     "25-01-2026": { pages: 8, pdf: "full.pdf" }
 };
+
+// --- NEW HELPER: Sort dates (Newest First) ---
+function getSortedDates() {
+    return Object.keys(editions).sort((a, b) => {
+        const [d1, m1, y1] = a.split('-').map(Number);
+        const [d2, m2, y2] = b.split('-').map(Number);
+        const dateA = new Date(y1, m1 - 1, d1);
+        const dateB = new Date(y2, m2 - 1, d2);
+        return dateB - dateA; // Descending order
+    });
+}
 
 // STATE
 let currentDateStr = "27-01-2026"; 
@@ -21,6 +31,7 @@ let cropper = null;
 // INITIALIZATION
 window.onload = function() {
     setupDateDisplay();
+    // Load the calculated current date (which is now guaranteed to be latest or today)
     loadEdition(currentDateStr);
     
     // Add generic outside click to close modals
@@ -34,13 +45,20 @@ window.onload = function() {
 // 1. DATE & DISPLAY LOGIC
 function setupDateDisplay() {
     const today = new Date();
-    const dateStr = today.getDate().toString().padStart(2, '0') + "-" + (today.getMonth() + 1).toString().padStart(2, '0') + "-" + today.getFullYear();
-    document.getElementById('headerDate').innerText = dateStr;
+    const todayStr = today.getDate().toString().padStart(2, '0') + "-" + (today.getMonth() + 1).toString().padStart(2, '0') + "-" + today.getFullYear();
     
-    if(editions[dateStr]) {
-        currentDateStr = dateStr;
+    // Set Header to Today's Date (Calendar date)
+    document.getElementById('headerDate').innerText = todayStr;
+    
+    const sortedDates = getSortedDates();
+
+    // LOGIC: If Today's paper exists, show it. Otherwise, show the Newest available.
+    if(editions[todayStr]) {
+        currentDateStr = todayStr;
+    } else if (sortedDates.length > 0) {
+        currentDateStr = sortedDates[0]; // Pick the newest date from the sorted list
     } else {
-        currentDateStr = Object.keys(editions)[0];
+        currentDateStr = "01-01-2026"; // Fallback
     }
     
     populateDateDropdown();
@@ -56,7 +74,15 @@ function loadEdition(dateStr) {
     totalPages = editions[dateStr].pages;
     
     document.getElementById('liveDate').innerText = dateStr;
-    document.getElementById('btnPdf').href = `papers/${dateStr}/${editions[dateStr].pdf}`;
+    
+    // PDF Button Logic
+    const pdfBtn = document.getElementById('btnPdf');
+    if(editions[dateStr].pdf) {
+        pdfBtn.href = `papers/${dateStr}/${editions[dateStr].pdf}`;
+        pdfBtn.style.display = "inline-block";
+    } else {
+        pdfBtn.style.display = "none"; // Hide if no PDF defined
+    }
     
     updateViewer();
 }
@@ -114,11 +140,9 @@ function setActive(element) {
     element.classList.add('active');
 }
 
-// 4. NEW: INFO MODALS LOGIC (About, Contact, etc.)
+// 4. INFO MODALS LOGIC (About, Contact, etc.)
 function openInfoModal(modalId) {
-    // Show the modal
     document.getElementById(modalId).style.display = "block";
-    // Close the sidebar automatically
     const sidebar = document.getElementById("sidebar");
     if (sidebar.style.width === "250px") {
         sidebar.style.width = "0";
@@ -129,21 +153,33 @@ function closeInfoModal(modalId) {
     document.getElementById(modalId).style.display = "none";
 }
 
-// 5. EDITION SELECTOR
+// 5. EDITION SELECTOR (Fixed Sorting)
 function populateDateDropdown() {
     const select = document.getElementById('dateSelect');
     select.innerHTML = "";
-    Object.keys(editions).forEach(date => {
+    
+    const sortedDates = getSortedDates(); // Use the sorted list
+
+    sortedDates.forEach(date => {
         const option = document.createElement("option");
         option.value = date;
         option.text = date;
         select.appendChild(option);
     });
+    
+    // Ensure the currently selected date is highlighted in the dropdown
     select.value = currentDateStr;
 }
 
-function openEditionSelector() { document.getElementById('editionModal').style.display = "block"; }
+function openEditionSelector() { 
+    // Refresh dropdown selection before showing
+    const select = document.getElementById('dateSelect');
+    if(select) select.value = currentDateStr;
+    document.getElementById('editionModal').style.display = "block"; 
+}
+
 function closeEditionSelector() { document.getElementById('editionModal').style.display = "none"; }
+
 function loadSelectedEdition() {
     const selectedDate = document.getElementById('dateSelect').value;
     loadEdition(selectedDate);
