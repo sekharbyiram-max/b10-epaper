@@ -47,7 +47,7 @@ function setupDateDisplay() {
     const y = today.getFullYear();
     const todayStr = `${d}-${m}-${y}`;
     
-    // Attempt to set header date (Only works if ID exists)
+    // Attempt to set header date
     const headerDateEl = document.getElementById('headerDate');
     if (headerDateEl) headerDateEl.innerText = todayStr;
     
@@ -75,18 +75,16 @@ function loadEdition(dateStr) {
     
     document.getElementById('liveDate').innerText = dateStr;
     
-    // --- NEW: WHATSAPP SHARE BUTTON LOGIC ---
+    // --- UPDATED: PDF FILE SHARING LOGIC ---
     const pdfBtn = document.getElementById('btnPdf');
     if (pdfBtn) {
-        // Construct the URL to the uploads folder
-        // IMPORTANT: This expects '30-01-2026.pdf' (lowercase)
         const pdfUrl = `${REPO_URL}/uploads/${dateStr}.pdf`;
 
-        // Set the button to Trigger Share
         pdfBtn.href = "#"; 
         pdfBtn.onclick = (e) => {
             e.preventDefault(); 
-            sharePDF(pdfUrl, dateStr);
+            // Call the new "File Sharer" function
+            sharePdfFile(pdfUrl, dateStr);
         };
         pdfBtn.style.display = "inline-block"; 
     }
@@ -94,22 +92,41 @@ function loadEdition(dateStr) {
     updateViewer();
 }
 
-// --- SMART SHARE FUNCTION ---
-async function sharePDF(url, date) {
-    // 1. Try Native Mobile Sharing (WhatsApp/Telegram/etc)
-    if (navigator.share) {
-        try {
+// --- NEW FUNCTION: DOWNLOAD & SHARE FILE (No Link) ---
+async function sharePdfFile(url, date) {
+    const btn = document.getElementById('btnPdf');
+    const originalText = btn.innerText;
+    
+    try {
+        // 1. Notify user (downloading takes 1-2 seconds)
+        btn.innerText = "⏳..."; 
+        
+        // 2. Fetch the PDF from the server
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("PDF not found on server");
+        
+        const blob = await response.blob();
+        
+        // 3. Create a File Object
+        const file = new File([blob], `B10-Vartha-${date}.pdf`, { type: "application/pdf" });
+
+        // 4. Share the FILE directly
+        if (navigator.share && navigator.canShare({ files: [file] })) {
             await navigator.share({
+                files: [file],
                 title: `B10 Vartha - ${date}`,
-                text: `Read today's B10 Vartha Newspaper (${date}) here:`,
-                url: url
+                text: `Here is the ePaper for ${date}`
             });
-        } catch (err) {
-            console.log('Error sharing:', err);
+        } else {
+            // Fallback for PC (Just opens it)
+            window.open(url, '_blank');
         }
-    } else {
-        // 2. Desktop Fallback: Open in new tab
+    } catch (err) {
+        console.log("Sharing failed:", err);
+        alert("Could not share file directly. Opening link instead.");
         window.open(url, '_blank');
+    } finally {
+        btn.innerText = originalText;
     }
 }
 
