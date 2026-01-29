@@ -50,7 +50,7 @@ function setupDateDisplay() {
     const y = today.getFullYear();
     const todayStr = `${d}-${m}-${y}`;
     
-    // Set Header to Today's Date
+    // Set Header to Today's Date (if the element exists - we removed ID but checking just in case)
     const headerDateEl = document.getElementById('headerDate');
     if (headerDateEl) headerDateEl.innerText = todayStr;
     
@@ -79,18 +79,16 @@ function loadEdition(dateStr) {
     // Update the "LIVE" date in the header
     document.getElementById('liveDate').innerText = dateStr;
     
-    // FIX 2: RESTORE PDF BUTTON LOGIC
+    // PDF Button Logic
     const pdfBtn = document.getElementById('btnPdf');
     if (pdfBtn) {
-        // If the edition has a specific PDF defined, use it. 
-        // Otherwise, assume it is in the "uploads" folder (Phase 2 automation fallback).
         const pdfUrl = editions[dateStr].pdf 
             ? `papers/${dateStr}/${editions[dateStr].pdf}` 
             : `uploads/${dateStr}.pdf`;
 
         pdfBtn.href = pdfUrl;
-        pdfBtn.style.display = "inline-block"; // Always show the button
-        pdfBtn.target = "_blank"; // Open in new tab
+        pdfBtn.style.display = "inline-block"; 
+        pdfBtn.target = "_blank"; 
     }
     
     updateViewer();
@@ -233,16 +231,12 @@ function getBrandedCanvas() {
         ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
     }
 
-    const today = new Date();
-    const d = String(today.getDate()).padStart(2, '0');
-    const m = String(today.getMonth() + 1).padStart(2, '0');
-    const y = today.getFullYear();
-    const dateStr = `${d}-${m}-${y}`;
-    
+    // FIX 3: USE THE EDITION DATE (currentDateStr), NOT SYSTEM DATE
     ctx.textAlign = "left";
     ctx.fillStyle = "#333333";
     ctx.font = `bold ${Math.round(20 * scale)}px Arial`;
-    ctx.fillText(dateStr, 20 * scale, headerHeight / 2 + (8 * scale));
+    // Changed 'dateStr' to 'currentDateStr' here
+    ctx.fillText(currentDateStr, 20 * scale, headerHeight / 2 + (8 * scale));
 
     ctx.beginPath();
     ctx.moveTo(20 * scale, headerHeight - 2);
