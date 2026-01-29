@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import glob
 import re
-from PIL import Image  # This is the new "Scissors" tool
+from PIL import Image
 
 # CONFIGURATION
 UPLOADS_DIR = "uploads"
@@ -51,23 +51,26 @@ def main():
     
     print(f"Converted {page_count} pages.")
 
-    # 5. Update app.js
+    # 5. MOVE PDF to the paper folder (Standardize Structure)
+    # This fixes the missing PDF issue by putting it exactly where app.js looks for it.
+    target_pdf_path = os.path.join(output_dir, "full.pdf")
+    shutil.move(pdf_path, target_pdf_path)
+    print(f"Moved PDF to {target_pdf_path}")
+
+    # 6. Update app.js
     update_app_js(date_str, page_count)
 
-    # 6. Create Smart Preview (The New Feature)
+    # 7. Create Smart Preview
     first_page_path = os.path.join(output_dir, "1.png")
     if os.path.exists(first_page_path):
         create_smart_preview(date_str, first_page_path)
-
-    # 7. Clean up (DISABLED: Keep PDF for WhatsApp Sharing)
-    # os.remove(pdf_path)
-    print("PDF processed. Kept original file for WhatsApp sharing.")
 
 def update_app_js(date_key, pages):
     with open(APP_JS_FILE, "r", encoding="utf-8") as f:
         content = f.read()
 
-    new_entry = f'    "{date_key}": {{ pages: {pages} }},\n'
+    # We now explicitly add pdf: "full.pdf" to match the file we just moved
+    new_entry = f'    "{date_key}": {{ pages: {pages}, pdf: "full.pdf" }},\n'
     marker = "// ROBOT_ENTRY_POINT"
 
     if marker in content:
@@ -82,35 +85,26 @@ def update_app_js(date_key, pages):
 def create_smart_preview(date_str, source_image_path):
     target_cover = os.path.join(ASSETS_DIR, "latest-cover.png")
     
-    # --- SMART CROP LOGIC START ---
-    # We open Page 1 and cut out the TOP 45% (Logo + Headlines)
+    # --- SMART CROP LOGIC ---
     with Image.open(source_image_path) as img:
         width, height = img.size
-        # Crop: (Left, Top, Right, Bottom)
-        # We take the full width, but only the top 45% of the height
         crop_height = int(height * 0.45) 
-        
         cropped_img = img.crop((0, 0, width, crop_height))
         cropped_img.save(target_cover)
         print(f"Created Smart Crop (Top 45%) for WhatsApp preview")
-    # --- SMART CROP LOGIC END ---
 
-    # Update index.html
+    # Update index.html social tags
     with open(INDEX_HTML_FILE, "r", encoding="utf-8") as f:
         html_content = f.read()
 
     new_image_url = f"{DOMAIN_URL}/assets/latest-cover.png?v={date_str}"
-
     pattern_og = r'(<meta property="og:image" content=")([^"]+)(")'
     html_content = re.sub(pattern_og, f'\\g<1>{new_image_url}\\g<3>', html_content)
-
     pattern_tw = r'(<meta name="twitter:image" content=")([^"]+)(")'
     html_content = re.sub(pattern_tw, f'\\g<1>{new_image_url}\\g<3>', html_content)
 
     with open(INDEX_HTML_FILE, "w", encoding="utf-8") as f:
         f.write(html_content)
-    
-    print("Updated index.html social tags.")
 
 if __name__ == "__main__":
     main()
