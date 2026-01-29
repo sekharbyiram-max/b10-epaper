@@ -5,7 +5,7 @@ const REPO_URL = "https://epaperb10vartha.in";
 const editions = {
     "28-01-2026": { pages: 5, pdf: "full.pdf" },
     // ROBOT_ENTRY_POINT
-    "30-01-2026": { pages: 5 },
+    "30-01-2026": { pages: 5, pdf: "full.pdf" },
     "29-01-2026": { pages: 5 },
     "27-01-2026": { pages: 8, pdf: "full.pdf" },
     "26-01-2026": { pages: 6, pdf: "full.pdf" },
@@ -75,29 +75,21 @@ function loadEdition(dateStr) {
     
     document.getElementById('liveDate').innerText = dateStr;
     
-    // --- UPDATED: HYBRID PDF LOGIC (Works for OLD & NEW) ---
+    // --- UPDATED: UNIFIED PDF LOGIC ---
+    // This now looks for 'full.pdf' inside the papers folder for EVERY date.
+    // This works for old manual uploads AND the new robot uploads.
     const pdfBtn = document.getElementById('btnPdf');
     if (pdfBtn) {
-        let pdfUrl = "";
-
-        // CHECK: Is this an old manual entry (has 'pdf' property) or a new robot entry?
-        if (editions[dateStr].pdf) {
-            // OLD WAY: Look inside the specific paper folder
-            // e.g. papers/27-01-2026/full.pdf
-            pdfUrl = `papers/${dateStr}/${editions[dateStr].pdf}`;
-        } else {
-            // NEW WAY: Look in the uploads folder
-            // e.g. uploads/30-01-2026.pdf
-            pdfUrl = `uploads/${dateStr}.pdf`;
-        }
+        // Always look in: papers/DD-MM-YYYY/full.pdf
+        const pdfUrl = `papers/${dateStr}/full.pdf`;
 
         // Clear any old click events
         pdfBtn.onclick = null; 
         
-        // Set properties
+        // Set Link
         pdfBtn.href = pdfUrl;
         
-        // FORCE DOWNLOAD: Tells mobile browsers to save instead of opening blank tab
+        // FORCE DOWNLOAD: Tells mobile browsers to save the file
         pdfBtn.setAttribute("download", `B10-Vartha-${dateStr}.pdf`);
         
         pdfBtn.target = "_blank"; 
