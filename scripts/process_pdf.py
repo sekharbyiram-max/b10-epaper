@@ -34,6 +34,7 @@ def main():
     os.makedirs(output_dir)
 
     # 3. Convert PDF to Images
+    # Note: pdftoppm outputs filenames like prefix-1.png, prefix-2.png
     subprocess.run([
         "pdftoppm", 
         "-png", 
@@ -41,36 +42,38 @@ def main():
         os.path.join(output_dir, "")
     ], check=True)
 
-    # 4. Rename images
-    images = sorted(glob.glob(os.path.join(output_dir, "*.png")))
-    page_count = len(images)
+    # 4. Rename images to 1.png, 2.png, etc.
+    generated_images = sorted(glob.glob(os.path.join(output_dir, "*.png")))
+    page_count = len(generated_images)
     
-    for i, img_path in enumerate(images):
-        new_name = os.path.join(output_dir, f"{i + 1}.png")
-        os.rename(img_path, new_name)
+    final_images = []
+    for i, img_path in enumerate(generated_images):
+        new_name = f"{i+1}.png"
+        new_path = os.path.join(output_dir, new_name)
+        os.rename(img_path, new_path)
+        final_images.append(new_path)
     
-    print(f"Converted {page_count} pages.")
+    print(f"Generated {page_count} pages.")
 
-    # 5. MOVE PDF to the paper folder (Standardize Structure)
-    # This fixes the missing PDF issue by putting it exactly where app.js looks for it.
-    target_pdf_path = os.path.join(output_dir, "full.pdf")
-    shutil.move(pdf_path, target_pdf_path)
-    print(f"Moved PDF to {target_pdf_path}")
+    # 5. Create WhatsApp Preview (Smart Crop + Compression)
+    # Uses the first page (1.png)
+    if final_images:
+        create_smart_preview(date_str, final_images[0])
 
-    # 6. Update app.js
+    # 6. Move PDF to target folder
+    target_pdf = os.path.join(output_dir, "full.pdf")
+    shutil.move(pdf_path, target_pdf)
+
+    # 7. Update app.js
     update_app_js(date_str, page_count)
 
-    # 7. Create Smart Preview
-    first_page_path = os.path.join(output_dir, "1.png")
-    if os.path.exists(first_page_path):
-        create_smart_preview(date_str, first_page_path)
+    print("Processing Complete!")
 
 def update_app_js(date_key, pages):
     with open(APP_JS_FILE, "r", encoding="utf-8") as f:
         content = f.read()
 
-    # We now explicitly add pdf: "full.pdf" to match the file we just moved
-    new_entry = f'    "{date_key}": {{ pages: {pages}, pdf: "full.pdf" }},\n'
+    new_entry = f'    "{date_key}": {{ pages: {pages}, pdf: "full.pdf" }},'
     marker = "// ROBOT_ENTRY_POINT"
 
     if marker in content:
@@ -83,28 +86,39 @@ def update_app_js(date_key, pages):
             print(f"Entry for {date_key} already exists")
 
 def create_smart_preview(date_str, source_image_path):
-    target_cover = os.path.join(ASSETS_DIR, "latest-cover.png")
+    # CHANGE 1: Use .jpg extension for better compression
+    target_cover = os.path.join(ASSETS_DIR, "latest-cover.jpg")
     
     # --- SMART CROP LOGIC ---
     with Image.open(source_image_path) as img:
         width, height = img.size
         crop_height = int(height * 0.45) 
         cropped_img = img.crop((0, 0, width, crop_height))
-        cropped_img.save(target_cover)
-        print(f"Created Smart Crop (Top 45%) for WhatsApp preview")
+        
+        # CHANGE 2: Convert to RGB (required for JPG) and Save with Optimization
+        # Quality=70 ensures size is small (under 200KB) but clear
+        cropped_img = cropped_img.convert("RGB")
+        cropped_img.save(target_cover, "JPEG", optimize=True, quality=70)
+        
+        print(f"Created Smart Crop (Top 45%) for WhatsApp preview [Optimized JPG]")
 
     # Update index.html social tags
     with open(INDEX_HTML_FILE, "r", encoding="utf-8") as f:
         html_content = f.read()
 
-    new_image_url = f"{DOMAIN_URL}/assets/latest-cover.png?v={date_str}"
-    pattern_og = r'(<meta property="og:image" content=")([^"]+)(")'
-    html_content = re.sub(pattern_og, f'\\g<1>{new_image_url}\\g<3>', html_content)
-    pattern_tw = r'(<meta name="twitter:image" content=")([^"]+)(")'
-    html_content = re.sub(pattern_tw, f'\\g<1>{new_image_url}\\g<3>', html_content)
-
-    with open(INDEX_HTML_FILE, "w", encoding="utf-8") as f:
-        f.write(html_content)
+    # CHANGE 3: Update URL to point to .jpg instead of .png
+    new_image_url = f"{DOMAIN_URL}/assets/latest-cover.jpg?v={date_str}"
+    
+    # Regex to replace the content inside og:image meta tag
+    pattern_og = r'(<meta property="og:image" content=")(.*?)(")'
+    
+    if re.search(pattern_og, html_content):
+        new_content = re.sub(pattern_og, r'\1' + new_image_url + r'\3', html_content)
+        with open(INDEX_HTML_FILE, "w", encoding="utf-8") as f:
+            f.write(new_content)
+        print(f"Updated index.html og:image to {new_image_url}")
+    else:
+        print("Warning: Could not find og:image meta tag in index.html")
 
 if __name__ == "__main__":
     main()
