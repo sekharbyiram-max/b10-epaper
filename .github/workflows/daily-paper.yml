@@ -29,10 +29,30 @@ jobs:
       - name: Run Processing Script
         run: python scripts/process_pdf.py
 
+      - name: Generate editions.json
+        run: |
+          python -c "
+          import os, json
+          papers_dir = 'papers'
+          editions = {}
+          if os.path.exists(papers_dir):
+              for d in os.listdir(papers_dir):
+                  dir_path = os.path.join(papers_dir, d)
+                  if os.path.isdir(dir_path):
+                      # ఫోల్డర్ లోని .png ఫైల్స్ ని లెక్కిస్తుంది
+                      pages = len([f for f in os.listdir(dir_path) if f.endswith('.png')])
+                      if pages > 0:
+                          editions[d] = {'pages': pages, 'pdf': 'full.pdf'}
+          
+          # editions.json ఫైల్ ని సేవ్ చేస్తుంది
+          with open('editions.json', 'w') as f:
+              json.dump(editions, f, indent=4)
+          "
+
       - name: Save Changes
         run: |
           git config --global user.name "B10 Robot"
           git config --global user.email "robot@b10vartha.in"
-          git add papers/ app.js uploads/ index.html assets/
-          git commit -m "Auto-published edition with SMART CROP" || echo "No changes to commit"
+          git add papers/ app.js uploads/ index.html assets/ editions.json
+          git commit -m "Auto-published edition and updated editions.json" || echo "No changes to commit"
           git push

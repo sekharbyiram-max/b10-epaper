@@ -2,43 +2,7 @@
 const REPO_URL = "https://epaperb10vartha.in"; 
 
 // DATA 
-const editions = {
-    // ROBOT_ENTRY_POINT
-    "21-02-2026": { pages: 4, pdf: "full.pdf" },
-    "20-02-2026": { pages: 5, pdf: "full.pdf" },
-    "19-02-2026": { pages: 6, pdf: "full.pdf" },
-    "18-02-2026": { pages: 4, pdf: "full.pdf" },
-    "17-02-2026": { pages: 4, pdf: "full.pdf" },
-    "16-02-2026": { pages: 4, pdf: "full.pdf" },
-    "15-02-2026": { pages: 4, pdf: "full.pdf" },
-    "13-02-2026": { pages: 4, pdf: "full.pdf" },
-    "12-02-2026": { pages: 4, pdf: "full.pdf" },
-    "11-02-2026": { pages: 5, pdf: "full.pdf" },
-    "10-02-2026": { pages: 3, pdf: "full.pdf" },
-    "09-02-2026": { pages: 4, pdf: "full.pdf" },
-    "08-02-2026": { pages: 5, pdf: "full.pdf" },
-
-    "07-02-2026": { pages: 5, pdf: "full.pdf" },
-
-    "06-02-2026": { pages: 5, pdf: "full.pdf" },
-
-    "05-02-2026": { pages: 4, pdf: "full.pdf" },
-
-    
-
-    "04-02-2026": { pages: 4, pdf: "full.pdf" },
-
-    "03-02-2026": { pages: 5, pdf: "full.pdf" },
-
-    "02-02-2026": { pages: 6, pdf: "full.pdf" },
-
-    "01-02-2026": { pages: 6, pdf: "full.pdf" },
-
-    "31-01-2026": { pages: 5, pdf: "full.pdf" },
-
-    "30-01-2026": { pages: 4, pdf: "full.pdf" },
-
-};
+let editions = {}; // ఖాళీగా ఉంచుతాము. ఇది editions.json నుండి నిండుతుంది.
 
 // --- HELPER FUNCTION: Sort dates (Newest First) ---
 function getSortedDates() {
@@ -58,8 +22,21 @@ let totalPages = 1;
 let cropper = null; 
 
 // INITIALIZATION
-window.onload = function() {
+window.onload = async function() {
+    try {
+        // editions.json ఫైల్ ని లోడ్ చేయడం. (పాతది రాకుండా టైమ్‌స్టాంప్ వాడుతున్నాం)
+        const response = await fetch(`editions.json?v=${new Date().getTime()}`);
+        if (response.ok) {
+            editions = await response.json();
+        } else {
+            console.error("Failed to load editions.json");
+        }
+    } catch (error) {
+        console.error("Error fetching editions data:", error);
+    }
+
     setupDateDisplay();
+
     window.onclick = function(event) {
         if (event.target.classList.contains('modal')) {
             event.target.style.display = "none";
@@ -318,5 +295,3 @@ function downloadClip() {
         document.body.removeChild(a);
     });
 }
-
-
