@@ -262,7 +262,7 @@ function getBrandedCanvas() {
 
    const fontSub = Math.round(24 * scale); 
    ctx.font = `bold ${fontSub}px Arial`;
-    ctx.fillStyle = "#2196F3"; // ఇక్కడ బ్లూ కలర్ యాడ్ చేశాం
+    ctx.fillStyle = "#FFD700"; // ఇక్కడ బ్లూ తీసేసి ఎల్లో కలర్ ఇచ్చాం
     ctx.fillText("Designed & Developed by html-ramu", finalWidth / 2, finalHeight - (footerHeight * 0.25));
 
     return finalCanvas;
