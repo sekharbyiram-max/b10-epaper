@@ -260,9 +260,10 @@ function getBrandedCanvas() {
     ctx.font = `bold ${fontMain}px Arial`;
     ctx.fillText("Read full NEWS at epaperb10vartha.in", finalWidth / 2, finalHeight - (footerHeight * 0.6));
 
-    const fontSub = Math.round(16 * scale); 
-    ctx.font = `normal ${fontSub}px Arial`;
-    ctx.fillText("Built by html-ramu", finalWidth / 2, finalHeight - (footerHeight * 0.25));
+   const fontSub = Math.round(24 * scale); 
+   ctx.font = `bold ${fontSub}px Arial`;
+    ctx.fillStyle = "#2196F3"; // ఇక్కడ బ్లూ కలర్ యాడ్ చేశాం
+    ctx.fillText("Designed & Developed by html-ramu", finalWidth / 2, finalHeight - (footerHeight * 0.25));
 
     return finalCanvas;
 }
