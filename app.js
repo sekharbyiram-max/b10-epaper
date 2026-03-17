@@ -251,7 +251,7 @@ function getBrandedCanvas() {
     ctx.drawImage(cropCanvas, cropX, headerHeight);
 
     // Footer
-    ctx.fillStyle = "#008000"; 
+    ctx.fillStyle = "#333333"; 
     ctx.fillRect(0, finalHeight - footerHeight, finalWidth, footerHeight);
 
     ctx.textAlign = "center";
@@ -260,9 +260,9 @@ function getBrandedCanvas() {
     ctx.font = `bold ${fontMain}px Arial`;
     ctx.fillText("Read full NEWS at epaperb10vartha.in", finalWidth / 2, finalHeight - (footerHeight * 0.6));
 
-   const fontSub = Math.round(24 * scale); 
-   ctx.font = `bold ${fontSub}px Arial`;
-    ctx.fillStyle = "#FFD700"; // ఇక్కడ బ్లూ తీసేసి ఎల్లో కలర్ ఇచ్చాం
+    const fontSub = Math.round(24 * scale); 
+    ctx.font = `bold ${fontSub}px Arial`;
+    ctx.fillStyle = "#2196F3"; 
     ctx.fillText("Designed & Developed by html-ramu", finalWidth / 2, finalHeight - (footerHeight * 0.25));
 
     return finalCanvas;
