@@ -210,8 +210,7 @@ function getBrandedCanvas() {
     const scale = finalWidth / 800;
 
     const headerHeight = Math.round(160 * scale); 
-    const footerHeight = Math.round(110 * scale); 
-    const finalHeight = cropCanvas.height + headerHeight + footerHeight;
+    const finalHeight = cropCanvas.height + headerHeight; // Removed footerHeight
 
     const finalCanvas = document.createElement('canvas');
     finalCanvas.width = finalWidth;
@@ -250,20 +249,7 @@ function getBrandedCanvas() {
     const cropX = (finalWidth - cropCanvas.width) / 2;
     ctx.drawImage(cropCanvas, cropX, headerHeight);
 
-    // Footer
-    ctx.fillStyle = "#333333"; 
-    ctx.fillRect(0, finalHeight - footerHeight, finalWidth, footerHeight);
-
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#ffffff"; 
-    const fontMain = Math.round(24 * scale); 
-    ctx.font = `bold ${fontMain}px Arial`;
-    ctx.fillText("Read full NEWS at epaperb10vartha.in", finalWidth / 2, finalHeight - (footerHeight * 0.6));
-
-    const fontSub = Math.round(24 * scale); 
-    ctx.font = `bold ${fontSub}px Arial`;
-    ctx.fillStyle = "#2196F3"; 
-    ctx.fillText("Designed & Developed by html-ramu", finalWidth / 2, finalHeight - (footerHeight * 0.25));
+    
 
     return finalCanvas;
 }
